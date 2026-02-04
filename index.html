@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CS 12.3A Interactive Revision Hub</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        /* Custom Scrollbar for clean look */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        /* Chart Container Strict Styling */
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 400px;
+        }
+
+        /* Bus Animation Classes */
+        .bus-path {
+            transition: all 0.3s ease;
+        }
+        .bus-active {
+            background-color: #3b82f6 !important; /* Blue-500 */
+            box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+            transform: scaleY(1.1);
+        }
+
+        /* Logic Gate connection lines */
+        .connection-line {
+            height: 2px;
+            background-color: #cbd5e1;
+            transition: background-color 0.3s;
+        }
+        .connection-active {
+            background-color: #22c55e;
+        }
+
+        /* Soft Warm Theme overrides */
+        body {
+            background-color: #F9F7F2;
+            color: #333333;
+        }
+    </style>
+    <!-- Chosen Palette: Warm Neutral Academic -->
+    <!-- Application Structure Plan:
+         The app is designed as a vertical single-page revision guide with a sticky sidebar for navigation.
+         1. Operating Systems: Uses a Tab interface to switch between definitions without clutter.
+         2. User Interfaces: A comparison grid (Cards) to juxtapose Pros/Cons.
+         3. CPU Architecture: An interactive 'Stepper' to visualize the abstract FDE cycle and System Bus data movement.
+         4. RISC vs CISC: A Chart.js visualization to conceptualize the trade-off (Hardware Complexity vs Code Size) + Textual comparison.
+         5. Memory: A toggle view for Paging vs Segmentation vs Virtual Machines.
+         6. Logic: A simplified text/truth table analyzer.
+         Why? This structure chunks heavy text into digestible interactive bites, aiding memory retention (Active Recall).
+    -->
+    <!-- Visualization & Content Choices:
+         1. OS Types: Tabs -> Allows focus on one definition at a time.
+         2. GUI/CLI: Comparison Cards -> Distinct visual separation of pros/cons.
+         3. FDE Cycle: JS-driven visual highlighting -> Moves focus from RAM to CPU registers to simulate the cycle.
+         4. RISC/CISC: Radar Chart (Chart.js) -> Visualizes the multi-faceted differences (CPI, Transistors, Code Size) abstractly.
+         5. Logic: HTML Tables -> Standard format for Truth Tables, easy to read.
+         Confirmation: NO SVG graphics used. NO Mermaid JS used.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+</head>
+<body class="font-sans leading-relaxed">
+
+    <!-- Top Navigation / Header -->
+    <header class="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center">
+                <span class="text-2xl font-bold text-slate-800 tracking-tight">CS 12.3A <span class="text-blue-600">Revision Hub</span></span>
+            </div>
+            <div class="hidden md:flex space-x-6 text-sm font-medium text-slate-600">
+                <a href="#os-section" class="hover:text-blue-600 transition">OS Types</a>
+                <a href="#ui-section" class="hover:text-blue-600 transition">Interfaces</a>
+                <a href="#cpu-section" class="hover:text-blue-600 transition">CPU Arch</a>
+                <a href="#risc-cisc-section" class="hover:text-blue-600 transition">RISC/CISC</a>
+                <a href="#memory-section" class="hover:text-blue-600 transition">Memory</a>
+                <a href="#logic-section" class="hover:text-blue-600 transition">Logic</a>
+            </div>
+            <button onclick="window.print()" class="bg-slate-800 text-white px-4 py-2 rounded-md text-sm hover:bg-slate-700 transition">
+                Print / Save PDF
+            </button>
+        </div>
+    </header>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        <!-- INTRO -->
+        <div class="bg-white rounded-xl shadow-sm p-6 mb-8 border-l-4 border-blue-500">
+            <h1 class="text-2xl font-bold text-slate-800 mb-2">Welcome to your Revision Guide</h1>
+            <p class="text-slate-600">
+                This interactive tool covers the <strong>Computer Science 12.3A</strong> unit objectives. 
+                Use the navigation to jump between topics. Content is based on standard Cambridge A-Level definitions (aligned with bzfar).
+                Click the <span class="font-mono text-xs bg-gray-100 px-1 py-0.5 rounded">Copy Notes</span> buttons to extract text for your Google Doc.
+            </p>
+        </div>
+
+        <!-- SECTION 1: OPERATING SYSTEMS -->
+        <section id="os-section" class="mb-12 scroll-mt-20">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-3xl font-bold text-slate-800">1. Types of Operating Systems</h2>
+                <button onclick="copyContent('os-content')" class="text-sm text-blue-600 hover:underline">Copy Notes</button>
+            </div>
+            <p class="text-slate-600 mb-6">Explore the three specific types of operating systems required for 12.3.1. Click the tabs below to view detailed definitions and characteristics.</p>
+
+            <div class="bg-white rounded-xl shadow-lg overflow-hidden" id="os-content">
+                <!-- Tabs -->
+                <div class="flex border-b border-gray-200">
+                    <button class="flex-1 py-4 text-center font-semibold text-blue-600 border-b-2 border-blue-600 transition hover:bg-gray-50 focus:outline-none" onclick="switchTab(event, 'os-realtime')">Real-Time (RTOS)</button>
+                    <button class="flex-1 py-4 text-center font-semibold text-gray-500 hover:text-blue-600 transition hover:bg-gray-50 focus:outline-none" onclick="switchTab(event, 'os-network')">Network (NOS)</button>
+                    <button class="flex-1 py-4 text-center font-semibold text-gray-500 hover:text-blue-600 transition hover:bg-gray-50 focus:outline-none" onclick="switchTab(event, 'os-batch')">Batch Processing</button>
+                </div>
+
+                <!-- Tab Content: Real Time -->
+                <div id="os-realtime" class="p-8 tab-content">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                        <div>
+                            <h3 class="text-xl font-bold mb-3 text-slate-800">Real-Time Operating System (RTOS)</h3>
+                            <ul class="space-y-3 text-slate-700 list-disc pl-5">
+                                <li><strong>Definition:</strong> An OS intended to serve real-time applications that process data as it comes in, typically without buffer delays.</li>
+                                <li><strong>Key Feature:</strong> Must guarantee a response within a strict, specified time constraint (latency).</li>
+                                <li><strong>Types:</strong>
+                                    <ul class="list-circle pl-5 mt-1 text-sm text-slate-600">
+                                        <li><em>Hard Real-Time:</em> Missing a deadline is a total system failure (e.g., car airbag, pacemaker).</li>
+                                        <li><em>Soft Real-Time:</em> Missing a deadline degrades performance but isn't catastrophic (e.g., video streaming).</li>
+                                    </ul>
+                                </li>
+                                <li><strong>Usage:</strong> Industrial control systems, medical devices, aircraft autopilots.</li>
+                            </ul>
+                        </div>
+                        <div class="bg-blue-50 p-6 rounded-lg border border-blue-100">
+                            <h4 class="font-bold text-blue-800 mb-2">Key Keywords</h4>
+                            <div class="flex flex-wrap gap-2">
+                                <span class="px-3 py-1 bg-white rounded shadow-sm text-sm text-blue-600">Guaranteed Response</span>
+                                <span class="px-3 py-1 bg-white rounded shadow-sm text-sm text-blue-600">Safety Critical</span>
+                                <span class="px-3 py-1 bg-white rounded shadow-sm text-sm text-blue-600">Redundancy</span>
+                                <span class="px-3 py-1 bg-white rounded shadow-sm text-sm text-blue-600">Sensors/Actuators</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab Content: Network -->
+                <div id="os-network" class="p-8 hidden tab-content">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                        <div>
+                            <h3 class="text-xl font-bold mb-3 text-slate-800">Network Operating System (NOS)</h3>
+                            <ul class="space-y-3 text-slate-700 list-disc pl-5">
+                                <li><strong>Definition:</strong> An OS designed to support workstations, personal computers, and older terminals that are connected on a local area network (LAN).</li>
+                                <li><strong>Key Function:</strong> Manages network resources (files, printers) and security (user authentication).</li>
+                                <li><strong>Features:</strong>
+                                    <ul class="list-circle pl-5 mt-1 text-sm text-slate-600">
+                                        <li>Allows shared access to files, printers, and applications.</li>
+                                        <li>Centralized management of user accounts and security policies.</li>
+                                        <li>Provides network communication protocols.</li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="bg-purple-50 p-6 rounded-lg border border-purple-100">
+                            <h4 class="font-bold text-purple-800 mb-2">Key Keywords</h4>
+                            <div class="flex flex-wrap gap-2">
+                                <span class="px-3 py-1 bg-white rounded shadow-sm text-sm text-purple-600">Resource Sharing</span>
+                                <span class="px-3 py-1 bg-white rounded shadow-sm text-sm text-purple-600">Authentication</span>
+                                <span class="px-3 py-1 bg-white rounded shadow-sm text-sm text-purple-600">File Server</span>
+                                <span class="px-3 py-1 bg-white rounded shadow-sm text-sm text-purple-600">Concurrency</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab Content: Batch -->
+                <div id="os-batch" class="p-8 hidden tab-content">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                        <div>
+                            <h3 class="text-xl font-bold mb-3 text-slate-800">Batch Processing OS</h3>
+                            <ul class="space-y-3 text-slate-700 list-disc pl-5">
+                                <li><strong>Definition:</strong> A system where programs (jobs) are collected together in groups (batches) and processed automatically without user intervention.</li>
+                                <li><strong>Process:</strong> JCL (Job Control Language) is often used to instruct the OS.</li>
+                                <li><strong>Usage:</strong> Payroll processing, bank statement generation, billing systems.</li>
+                                <li><strong>Advantages:</strong> Can run during off-peak hours (night) to save computing resources; requires no operator presence.</li>
+                            </ul>
+                        </div>
+                        <div class="bg-amber-50 p-6 rounded-lg border border-amber-100">
+                            <h4 class="font-bold text-amber-800 mb-2">Key Keywords</h4>
+                            <div class="flex flex-wrap gap-2">
+                                <span class="px-3 py-1 bg-white rounded shadow-sm text-sm text-amber-600">No User Interaction</span>
+                                <span class="px-3 py-1 bg-white rounded shadow-sm text-sm text-amber-600">Off-peak</span>
+                                <span class="px-3 py-1 bg-white rounded shadow-sm text-sm text-amber-600">JCL</span>
+                                <span class="px-3 py-1 bg-white rounded shadow-sm text-sm text-amber-600">Sequential</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 2: USER INTERFACES -->
+        <section id="ui-section" class="mb-12 scroll-mt-20">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-3xl font-bold text-slate-800">2. User Interfaces</h2>
+                <button onclick="copyContent('ui-content')" class="text-sm text-blue-600 hover:underline">Copy Notes</button>
+            </div>
+            <p class="text-slate-600 mb-6">Comparison of GUI, CLI, Natural Language, and Gesture Recognition. Review the Pros and Cons below.</p>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4" id="ui-content">
+                <!-- GUI Card -->
+                <div class="bg-white p-5 rounded-xl shadow border-t-4 border-blue-500">
+                    <div class="text-center mb-4">
+                        <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-2 text-2xl">🖱️</div>
+                        <h3 class="font-bold text-lg">GUI</h3>
+                        <p class="text-xs text-gray-500">Graphical User Interface (WIMP)</p>
+                    </div>
+                    <div class="space-y-4 text-sm">
+                        <div>
+                            <strong class="text-green-600 block mb-1">Advantages:</strong>
+                            <ul class="list-disc pl-4 text-gray-600">
+                                <li>Intuitive/Easy to learn for beginners.</li>
+                                <li>No commands to memorize.</li>
+                                <li>Multitasking is easier visually (windows).</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <strong class="text-red-600 block mb-1">Disadvantages:</strong>
+                            <ul class="list-disc pl-4 text-gray-600">
+                                <li>Resource heavy (RAM/Graphics).</li>
+                                <li>Slower for experienced users than CLI.</li>
+                                <li>Takes up storage space.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CLI Card -->
+                <div class="bg-white p-5 rounded-xl shadow border-t-4 border-slate-700">
+                    <div class="text-center mb-4">
+                        <div class="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-2 text-2xl">⌨️</div>
+                        <h3 class="font-bold text-lg">CLI</h3>
+                        <p class="text-xs text-gray-500">Command Line Interface</p>
+                    </div>
+                    <div class="space-y-4 text-sm">
+                        <div>
+                            <strong class="text-green-600 block mb-1">Advantages:</strong>
+                            <ul class="list-disc pl-4 text-gray-600">
+                                <li>Extremely fast for experts.</li>
+                                <li>Low memory/storage overhead.</li>
+                                <li>Can script/automate complex tasks (Batch files).</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <strong class="text-red-600 block mb-1">Disadvantages:</strong>
+                            <ul class="list-disc pl-4 text-gray-600">
+                                <li>Steep learning curve.</li>
+                                <li>Commands must be memorized exactly.</li>
+                                <li>No visual cues.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- NLI Card -->
+                <div class="bg-white p-5 rounded-xl shadow border-t-4 border-purple-500">
+                    <div class="text-center mb-4">
+                        <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-2 text-2xl">🎙️</div>
+                        <h3 class="font-bold text-lg">Natural Language</h3>
+                        <p class="text-xs text-gray-500">Voice/Text (e.g., Siri, Alexa)</p>
+                    </div>
+                    <div class="space-y-4 text-sm">
+                        <div>
+                            <strong class="text-green-600 block mb-1">Advantages:</strong>
+                            <ul class="list-disc pl-4 text-gray-600">
+                                <li>Hands-free operation.</li>
+                                <li>Very easy for non-technical users.</li>
+                                <li>Accessible for disabilities.</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <strong class="text-red-600 block mb-1">Disadvantages:</strong>
+                            <ul class="list-disc pl-4 text-gray-600">
+                                <li>Struggles with accents/dialects.</li>
+                                <li>Ambiguity in language processing.</li>
+                                <li>Privacy concerns.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Gesture Card -->
+                <div class="bg-white p-5 rounded-xl shadow border-t-4 border-orange-500">
+                    <div class="text-center mb-4">
+                        <div class="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-2 text-2xl">👋</div>
+                        <h3 class="font-bold text-lg">Gesture</h3>
+                        <p class="text-xs text-gray-500">Motion/Touch</p>
+                    </div>
+                    <div class="space-y-4 text-sm">
+                        <div>
+                            <strong class="text-green-600 block mb-1">Advantages:</strong>
+                            <ul class="list-disc pl-4 text-gray-600">
+                                <li>Very natural for spatial tasks (VR/AR).</li>
+                                <li>Hygienic (no touch required in some cases).</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <strong class="text-red-600 block mb-1">Disadvantages:</strong>
+                            <ul class="list-disc pl-4 text-gray-600">
+                                <li>"Gorilla arm" (fatigue).</li>
+                                <li>Unintentional triggers.</li>
+                                <li>Low precision compared to mouse.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 3: CPU ARCHITECTURE -->
+        <section id="cpu-section" class="mb-12 scroll-mt-20">
+            <h2 class="text-3xl font-bold text-slate-800 mb-4">3. Fetch-Decode-Execute & System Bus</h2>
+            <div class="bg-white rounded-xl shadow p-6 mb-6">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    
+                    <!-- FDE Visualizer -->
+                    <div class="lg:col-span-2">
+                        <h3 class="text-lg font-bold mb-4 flex items-center">
+                            <span class="bg-slate-800 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-2">A</span>
+                            The F-D-E Cycle Simulator
+                        </h3>
+                        <div class="border border-gray-200 rounded-lg p-4 bg-gray-50 relative min-h-[300px]">
+                            <!-- Visual Components -->
+                            <div class="flex justify-between items-center mb-12">
+                                <div id="box-ram" class="w-24 h-24 bg-white border-2 border-gray-300 rounded flex flex-col items-center justify-center text-center shadow-sm z-10">
+                                    <span class="text-xs font-bold text-gray-500">Main Memory</span>
+                                    <span class="text-xs text-blue-600 mt-1" id="ram-data">Instruction<br>@ 101</span>
+                                </div>
+                                
+                                <div class="flex flex-col gap-2 w-1/3 mx-4">
+                                    <div id="bus-addr" class="h-2 bg-gray-200 rounded bus-path relative group"><span class="absolute -top-4 text-[10px] w-full text-center text-gray-400">Address Bus (One Way)</span></div>
+                                    <div id="bus-data" class="h-2 bg-gray-200 rounded bus-path relative"><span class="absolute -top-4 text-[10px] w-full text-center text-gray-400">Data Bus (Two Way)</span></div>
+                                </div>
+
+                                <div class="w-32 h-40 bg-slate-800 rounded-lg p-2 flex flex-col gap-2 shadow-lg z-10 text-white">
+                                    <div class="text-center text-xs font-bold border-b border-gray-600 pb-1">CPU</div>
+                                    <div id="reg-pc" class="bg-slate-700 p-1 rounded text-[10px] flex justify-between"><span>PC:</span> <span class="text-green-400">101</span></div>
+                                    <div id="reg-mar" class="bg-slate-700 p-1 rounded text-[10px] flex justify-between"><span>MAR:</span> <span class="text-gray-400">000</span></div>
+                                    <div id="reg-mdr" class="bg-slate-700 p-1 rounded text-[10px] flex justify-between"><span>MDR:</span> <span class="text-gray-400">---</span></div>
+                                    <div id="reg-cir" class="bg-slate-700 p-1 rounded text-[10px] flex justify-between"><span>CIR:</span> <span class="text-gray-400">---</span></div>
+                                    <div id="reg-cu" class="bg-slate-600 p-1 rounded text-[10px] text-center mt-auto">Control Unit</div>
+                                </div>
+                            </div>
+                            
+                            <div class="bg-white p-3 rounded border border-blue-100">
+                                <p id="cycle-desc" class="text-sm text-slate-700"><strong>Start:</strong> Press 'Next Step' to begin the cycle.</p>
+                            </div>
+                            
+                            <div class="mt-4 flex gap-2">
+                                <button onclick="nextCycleStep()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm font-bold transition">Next Step</button>
+                                <button onclick="resetCycle()" class="bg-gray-200 hover:bg-gray-300 text-slate-700 px-4 py-2 rounded text-sm transition">Reset</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bus Definitions -->
+                    <div class="space-y-4 text-sm" id="bus-notes">
+                        <div class="p-3 bg-gray-50 rounded border-l-4 border-yellow-500">
+                            <strong>Address Bus:</strong> Unidirectional. Carries the memory location address from CPU to Memory. Width determines max addressable memory (2^width).
+                        </div>
+                        <div class="p-3 bg-gray-50 rounded border-l-4 border-green-500">
+                            <strong>Data Bus:</strong> Bidirectional. Carries the actual data/instructions between CPU and Memory. Width determines word size (bits per transfer).
+                        </div>
+                        <div class="p-3 bg-gray-50 rounded border-l-4 border-red-500">
+                            <strong>Control Bus:</strong> Bidirectional/Unidirectional components. Carries control signals (Read, Write, Interrupt, Clock) to coordinate activities.
+                        </div>
+                        <div class="p-3 bg-gray-50 rounded border-l-4 border-blue-500">
+                            <strong>Performance Factors:</strong>
+                            <ul class="list-disc pl-4 mt-1 text-xs">
+                                <li><strong>Clock Speed:</strong> Hz. Cycles per second. Higher = faster (usually).</li>
+                                <li><strong>Bus Width:</strong> Bits. Wider data bus = more data per fetch.</li>
+                                <li><strong>Word Size:</strong> Number of bits CPU processes in one go.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 4: RISC VS CISC -->
+        <section id="risc-cisc-section" class="mb-12 scroll-mt-20">
+            <h2 class="text-3xl font-bold text-slate-800 mb-4">4. RISC vs CISC Architecture</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 bg-white p-6 rounded-xl shadow">
+                
+                <!-- Comparison Table -->
+                <div class="space-y-4">
+                    <h3 class="text-lg font-bold text-blue-800">Key Differences</h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm text-left">
+                            <thead class="bg-slate-100 text-slate-700">
+                                <tr>
+                                    <th class="p-3 rounded-tl">Feature</th>
+                                    <th class="p-3">RISC (Reduced)</th>
+                                    <th class="p-3 rounded-tr">CISC (Complex)</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200">
+                                <tr>
+                                    <td class="p-3 font-semibold">Instruction Set</td>
+                                    <td class="p-3">Small, simple sets</td>
+                                    <td class="p-3">Large, complex sets</td>
+                                </tr>
+                                <tr>
+                                    <td class="p-3 font-semibold">Cycles/Instr</td>
+                                    <td class="p-3">One cycle (Single)</td>
+                                    <td class="p-3">Variable (Multi-cycle)</td>
+                                </tr>
+                                <tr>
+                                    <td class="p-3 font-semibold">Hardware</td>
+                                    <td class="p-3">Simpler, more space for registers</td>
+                                    <td class="p-3">Complex, specialized circuitry</td>
+                                </tr>
+                                <tr>
+                                    <td class="p-3 font-semibold">Compiler</td>
+                                    <td class="p-3">Complex (has to break down tasks)</td>
+                                    <td class="p-3">Simple (instructions do more)</td>
+                                </tr>
+                                <tr>
+                                    <td class="p-3 font-semibold">Pipelining</td>
+                                    <td class="p-3">Highly effective</td>
+                                    <td class="p-3">Difficult to implement</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="bg-blue-50 p-4 rounded text-xs text-blue-800">
+                        <strong>Note:</strong> RISC is used in smartphones (ARM). CISC is used in desktops/laptops (x86).
+                    </div>
+                </div>
+
+                <!-- Visual Chart -->
+                <div class="flex flex-col items-center justify-center">
+                    <h3 class="text-lg font-bold mb-2 text-slate-800">Concept Visualization</h3>
+                    <div class="chart-container">
+                        <canvas id="riscCiscChart"></canvas>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-2 text-center">Relative comparison of architectural philosophy</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 5: MEMORY MANAGEMENT -->
+        <section id="memory-section" class="mb-12 scroll-mt-20">
+            <h2 class="text-3xl font-bold text-slate-800 mb-4">5. Memory Management</h2>
+            <div class="bg-white rounded-xl shadow overflow-hidden">
+                <div class="flex border-b border-gray-200 bg-gray-50">
+                    <button class="flex-1 py-3 px-4 text-sm font-semibold text-left hover:bg-white focus:bg-white focus:text-blue-600 transition" onclick="showMemory('paging')">Paging & Segmentation</button>
+                    <button class="flex-1 py-3 px-4 text-sm font-semibold text-left hover:bg-white focus:bg-white focus:text-blue-600 transition" onclick="showMemory('vm')">Virtual Machine</button>
+                    <button class="flex-1 py-3 px-4 text-sm font-semibold text-left hover:bg-white focus:bg-white focus:text-blue-600 transition" onclick="showMemory('addressing')">Addressing</button>
+                </div>
+
+                <div class="p-6" id="mem-content-area">
+                    <!-- Default: Paging -->
+                    <div id="mem-paging">
+                        <h3 class="text-xl font-bold text-slate-800 mb-3">Paging vs Segmentation</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="border p-4 rounded bg-orange-50 border-orange-200">
+                                <h4 class="font-bold text-orange-800">Paging</h4>
+                                <p class="text-sm mt-2 text-slate-700">Memory is divided into <strong>fixed-size</strong> physical blocks called 'Frames'. Logical memory is divided into same-sized 'Pages'.</p>
+                                <ul class="text-xs list-disc pl-4 mt-2 text-slate-600">
+                                    <li>Physical division.</li>
+                                    <li>User/Program doesn't see it.</li>
+                                    <li>Eliminates external fragmentation.</li>
+                                </ul>
+                            </div>
+                            <div class="border p-4 rounded bg-purple-50 border-purple-200">
+                                <h4 class="font-bold text-purple-800">Segmentation</h4>
+                                <p class="text-sm mt-2 text-slate-700">Memory is divided into <strong>variable-sized</strong> logical sections (e.g., Code, Stack, Data) based on the program structure.</p>
+                                <ul class="text-xs list-disc pl-4 mt-2 text-slate-600">
+                                    <li>Logical division.</li>
+                                    <li>Visible to the user/programmer.</li>
+                                    <li>Can cause external fragmentation.</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 6: BOOLEAN LOGIC -->
+        <section id="logic-section" class="mb-12 scroll-mt-20">
+            <h2 class="text-3xl font-bold text-slate-800 mb-4">6. Boolean Logic</h2>
+            <div class="bg-white rounded-xl shadow p-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div>
+                        <h3 class="text-lg font-bold mb-3">Logic Laws</h3>
+                        <div class="space-y-2 text-sm font-mono bg-slate-800 text-green-400 p-4 rounded">
+                            <p><strong>De Morgan's:</strong></p>
+                            <p class="pl-4">NOT(A AND B) = NOT A OR NOT B</p>
+                            <p class="pl-4">NOT(A OR B) = NOT A AND NOT B</p>
+                            <p class="mt-2"><strong>Distribution:</strong></p>
+                            <p class="pl-4">A AND (B OR C) = (A AND B) OR (A AND C)</p>
+                            <p class="mt-2"><strong>Absorption:</strong></p>
+                            <p class="pl-4">A OR (A AND B) = A</p>
+                            <p class="pl-4">A AND (A OR B) = A</p>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-bold mb-3">Logic Analyzer</h3>
+                        <p class="text-sm text-gray-600 mb-4">Select inputs to verify the XOR gate structure: (A AND NOT B) OR (NOT A AND B)</p>
+                        <div class="flex items-center gap-4 bg-gray-50 p-4 rounded border border-gray-200">
+                            <div class="flex flex-col gap-2">
+                                <label class="flex items-center gap-2 text-sm font-bold"><input type="checkbox" id="inp-a" class="w-4 h-4" onchange="updateLogic()"> Input A</label>
+                                <label class="flex items-center gap-2 text-sm font-bold"><input type="checkbox" id="inp-b" class="w-4 h-4" onchange="updateLogic()"> Input B</label>
+                            </div>
+                            <div class="h-12 w-px bg-gray-300"></div>
+                            <div class="text-center">
+                                <span class="text-xs text-gray-500 uppercase font-bold">Output (XOR)</span>
+                                <div id="logic-out" class="text-2xl font-bold text-gray-400">0</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </div>
+
+    <!-- JavaScript Logic -->
+    <script>
+        // --- 1. Tab Switching Logic ---
+        function switchTab(event, tabId) {
+            // Hide all tab content within the parent container
+            const container = event.target.closest('#os-content');
+            const contents = container.querySelectorAll('.tab-content');
+            contents.forEach(div => div.classList.add('hidden'));
+            
+            // Show selected
+            document.getElementById(tabId).classList.remove('hidden');
+
+            // Update Tab Styles
+            const buttons = container.querySelectorAll('button');
+            buttons.forEach(btn => {
+                btn.classList.remove('text-blue-600', 'border-b-2', 'border-blue-600');
+                btn.classList.add('text-gray-500');
+            });
+            event.target.classList.remove('text-gray-500');
+            event.target.classList.add('text-blue-600', 'border-b-2', 'border-blue-600');
+        }
+
+        // --- 2. FDE Cycle Simulator ---
+        let cycleStep = 0;
+        const steps = [
+            { text: "1. PC holds address of next instruction (101). Copied to MAR.", action: () => { highlight('reg-pc'); highlight('reg-mar'); highlightBus('bus-addr'); } },
+            { text: "2. Address sent via Address Bus to Main Memory.", action: () => { highlight('box-ram'); } },
+            { text: "3. Instruction at 101 found. Copied to Data Bus.", action: () => { highlight('bus-data'); } },
+            { text: "4. Instruction arrives at MDR.", action: () => { highlight('reg-mdr'); setText('reg-mdr span:last-child', 'LOAD A'); } },
+            { text: "5. Instruction copied to CIR. PC increments.", action: () => { highlight('reg-cir'); setText('reg-cir span:last-child', 'LOAD A'); setText('reg-pc span:last-child', '102'); } },
+            { text: "6. DECODE: Control Unit decodes 'LOAD A'.", action: () => { highlight('reg-cu'); } },
+            { text: "7. EXECUTE: Control signals sent to execute.", action: () => { setText('cycle-desc', 'Cycle Complete. Ready for next.'); } }
+        ];
+
+        function nextCycleStep() {
+            if (cycleStep < steps.length) {
+                // Clear previous styles
+                document.querySelectorAll('.bg-yellow-100').forEach(el => el.classList.remove('bg-yellow-100'));
+                document.querySelectorAll('.bus-active').forEach(el => el.classList.remove('bus-active'));
+                
+                // Set Text
+                document.getElementById('cycle-desc').innerHTML = `<strong>Step ${cycleStep + 1}:</strong> ${steps[cycleStep].text}`;
+                
+                // Execute Visual Action
+                steps[cycleStep].action();
+                
+                cycleStep++;
+            } else {
+                resetCycle();
+            }
+        }
+
+        function resetCycle() {
+            cycleStep = 0;
+            document.getElementById('cycle-desc').innerHTML = "<strong>Start:</strong> Press 'Next Step' to begin the cycle.";
+            setText('reg-mdr span:last-child', '---');
+            setText('reg-cir span:last-child', '---');
+            setText('reg-pc span:last-child', '101');
+            document.querySelectorAll('.bg-yellow-100').forEach(el => el.classList.remove('bg-yellow-100'));
+            document.querySelectorAll('.bus-active').forEach(el => el.classList.remove('bus-active'));
+        }
+
+        // Helper functions for simulator
+        function highlight(id) {
+            const el = document.getElementById(id);
+            el.classList.add('bg-yellow-100', 'transition', 'duration-300');
+            setTimeout(() => el.classList.remove('bg-yellow-100'), 1500);
+        }
+        function highlightBus(id) {
+            const el = document.getElementById(id);
+            el.classList.add('bus-active');
+            setTimeout(() => el.classList.remove('bus-active'), 1000);
+        }
+        function setText(selector, text) {
+            document.querySelector(`#${selector}`).innerText = text;
+        }
+
+
+        // --- 3. RISC vs CISC Chart ---
+        document.addEventListener('DOMContentLoaded', function() {
+            const ctx = document.getElementById('riscCiscChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: ['Hardware Complexity', 'Cycles per Instr.', 'Code Size (RAM usage)', 'Instruction Set Size', 'Pipelining Ease'],
+                    datasets: [{
+                        label: 'RISC',
+                        data: [2, 1, 5, 2, 5], // Low hardware complexity, Low CPI, High Code Size, Low Set Size, High Pipelining
+                        fill: true,
+                        backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                        borderColor: 'rgb(59, 130, 246)',
+                        pointBackgroundColor: 'rgb(59, 130, 246)',
+                    }, {
+                        label: 'CISC',
+                        data: [5, 4, 2, 5, 2], // High hardware complexity, High CPI, Low Code Size, High Set Size, Low Pipelining
+                        fill: true,
+                        backgroundColor: 'rgba(239, 68, 68, 0.2)',
+                        borderColor: 'rgb(239, 68, 68)',
+                        pointBackgroundColor: 'rgb(239, 68, 68)',
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        r: {
+                            angleLines: { display: true },
+                            suggestedMin: 0,
+                            suggestedMax: 5
+                        }
+                    }
+                }
+            });
+        });
+
+        // --- 4. Memory Section Toggle ---
+        function showMemory(type) {
+            const container = document.getElementById('mem-content-area');
+            if(type === 'paging') {
+                container.innerHTML = `
+                    <div id="mem-paging" class="fade-in">
+                        <h3 class="text-xl font-bold text-slate-800 mb-3">Paging vs Segmentation</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="border p-4 rounded bg-orange-50 border-orange-200">
+                                <h4 class="font-bold text-orange-800">Paging</h4>
+                                <p class="text-sm mt-2 text-slate-700">Memory is divided into <strong>fixed-size</strong> physical blocks called 'Frames'. Logical memory is divided into same-sized 'Pages'.</p>
+                                <ul class="text-xs list-disc pl-4 mt-2 text-slate-600">
+                                    <li>Physical division.</li>
+                                    <li>User/Program doesn't see it.</li>
+                                    <li>Eliminates external fragmentation.</li>
+                                </ul>
+                            </div>
+                            <div class="border p-4 rounded bg-purple-50 border-purple-200">
+                                <h4 class="font-bold text-purple-800">Segmentation</h4>
+                                <p class="text-sm mt-2 text-slate-700">Memory is divided into <strong>variable-sized</strong> logical sections (e.g., Code, Stack, Data) based on the program structure.</p>
+                                <ul class="text-xs list-disc pl-4 mt-2 text-slate-600">
+                                    <li>Logical division.</li>
+                                    <li>Visible to the user/programmer.</li>
+                                    <li>Can cause external fragmentation.</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>`;
+            } else if (type === 'vm') {
+                container.innerHTML = `
+                    <div class="fade-in">
+                        <h3 class="text-xl font-bold text-slate-800 mb-3">Virtual Machine (VM)</h3>
+                        <div class="bg-indigo-50 p-5 rounded border border-indigo-100">
+                            <p class="text-slate-700 text-sm mb-4">A <strong>Virtual Machine</strong> is a software emulation of a computer system. It runs an OS inside another OS.</p>
+                            <div class="flex gap-4 text-xs">
+                                <div class="bg-white p-3 rounded shadow-sm flex-1">
+                                    <strong class="text-indigo-600 block mb-1">Concept</strong>
+                                    Host OS (Windows) -> Hypervisor -> Guest OS (Linux). The Guest OS thinks it has real hardware.
+                                </div>
+                                <div class="bg-white p-3 rounded shadow-sm flex-1">
+                                    <strong class="text-indigo-600 block mb-1">Intermediate Code</strong>
+                                    Java uses a VM (JVM) to run bytecode. This allows "Write Once, Run Anywhere".
+                                </div>
+                            </div>
+                        </div>
+                    </div>`;
+            } else if (type === 'addressing') {
+                container.innerHTML = `
+                     <div class="fade-in">
+                        <h3 class="text-xl font-bold text-slate-800 mb-3">Addressable Memory</h3>
+                        <div class="p-4 bg-gray-100 rounded text-sm font-mono text-slate-700">
+                            Max Addressable Memory = 2<sup>(Bus Width)</sup>
+                        </div>
+                        <p class="text-sm text-slate-600 mt-4">
+                            If the <strong>Address Bus</strong> is 32 bits wide, the CPU can address 2<sup>32</sup> unique locations (approx 4GB).
+                            <br>
+                            <strong>Word Size</strong> determines how much data is stored at each address (typically 32 or 64 bits).
+                        </p>
+                    </div>`;
+            }
+        }
+
+        // --- 5. Logic Analyzer ---
+        function updateLogic() {
+            const a = document.getElementById('inp-a').checked;
+            const b = document.getElementById('inp-b').checked;
+            
+            // XOR Logic: (A AND !B) OR (!A AND B)
+            const result = (a && !b) || (!a && b);
+            
+            const outEl = document.getElementById('logic-out');
+            outEl.innerText = result ? "1" : "0";
+            outEl.classList.toggle('text-green-500', result);
+            outEl.classList.toggle('text-gray-400', !result);
+        }
+
+        // --- 6. Copy Functionality ---
+        function copyContent(elementId) {
+            // Get text content, clean it up
+            const el = document.getElementById(elementId);
+            const text = el.innerText.replace(/\n\s*\n/g, '\n'); // Remove excess whitespace
+            
+            navigator.clipboard.writeText(text).then(() => {
+                alert("Notes copied! You can now paste into Google Docs.");
+            }).catch(err => {
+                console.error('Failed to copy: ', err);
+            });
+        }
+
+    </script>
+</body>
+</html>
